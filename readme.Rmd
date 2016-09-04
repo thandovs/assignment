@@ -1,0 +1,257 @@
+---
+title: "Assignment 6"
+author: "Thando"
+date: "29 August 2016" 
+output: github_document
+---
+## 'Hello Octocat'
+'I love Octocat.She's the coolest cat in town'
+![](https://dl.dropboxusercontent.com/u/11805474/painblogr/biostats/images/octocat.png)
+``` {r quick_look, echo=TRUE}
+data("anscombe")
+dim(anscombe)
+names(anscombe)
+head(anscombe, n=6)
+tail(anscombe, n=6)
+summary(anscombe)
+```
+```{r xy_plot, echo=FALSE,fig.width=8,fig.height=8,fig.align= 'center',fig.path='./figures/',dev='svg'}
+plot(x=anscombe$x1, y=anscombe$y1)
+abline(lm (y1~x1,data=anscombe))
+```
+```{r data_import,echo=TRUE}
+library(readr) 
+
+ df <- read.csv("analgesic.csv")
+
+```
+```{r data_summary,echo=TRUE}
+ dim(df)
+ colnames(df)
+ names(df)
+ head(df ,n=6)
+ tail(df ,n=6)
+ summary(df)
+```
+```{r data_tidy,echo=TRUE}
+library(tidyr)
+library(dplyr)
+#Tidy data wide to long format
+df.data <- gather(df, Replicate_reading, Measurement, Measurement_1:Measurement_3)
+#Group by Group Column
+group_data <- group_by(df.data, Group)
+group_data
+#Group by the ID column 
+group_id <- group_by(group_data, ID)
+group_id
+#Summarise multiple values to a single value
+sum_data <- summarize(group_id, mean(Measurement))
+#Print summary 
+print(sum_data)
+```
+#Chunk 1
+
+#CHICKEN WEIGHTS
+
+##Null Hypothesis
+* No relationship exists between chick weight and the type of feed supplement.
+
+##Alternative Hypothesis
+* The type of feed supplement given will have an effect on the chick weight.
+```{r chicken_weights, echo = TRUE}
+
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(knitr)
+
+# import dataset
+chickweightscsv <- read.csv("chick-weights.csv")
+chickweights <- tbl_df(chickweightscsv)
+chickweights
+
+# Explore data with plots
+qplot(x = feed,
+      y = weight,
+      data = chickweights,
+      geom = "boxplot",
+      xlab = "Feed",
+      ylab = "Weight (g)",
+      main = "Chicken weights per feed supplement type")
+
+# Statistical Test (Chick ANOVA)
+ChickANO.VA <- aov(weight~feed, data = chickweights)
+summary(ChickANO.VA)
+# Comparing means of three or more groups
+
+# State degree of freedom and p-value
+Df =5 
+"p-value <0.05"
+"Reject null hypothesis and accept alternative hypothesis"
+
+# Correct for multiple comparisons using Bonferroni post hoc test
+pairwise.t.test(chickweights$weight, chickweights$feed,
+                p.adjust.method = 'bonferroni',
+                paired = FALSE)
+```
+
+#Chunk 2
+#THE HOT ZONE
+
+##Null Hypothesis 
+* There is no relationship between having gatroenteritis and consuming contaminated water. 
+
+##Alternative Hypothesis 
+* Consuming contaminated water causes gastroenteritis. 
+
+```{r the_hot_zone, echo = TRUE}
+
+
+# import dataset
+gastroenteritiscsv <- read.csv("gastroenteritis.csv")
+gastroenteritis <- tbl_df(gastroenteritiscsv)
+head(gastroenteritis)
+tail(gastroenteritis)
+
+
+# Cross tabulate with xtabs
+gastroenteritisX <- xtabs(~Consumption + Outcome,
+      data = gastroenteritis)
+gastroenteritisX
+
+
+# plot gastroenteritisX
+barplot(gastroenteritisX, beside = TRUE,
+        main = "Relationship between incidence of gastroenteritis and the amount of contaminated water consumed by people in a small town",
+        xlab = "Gastroenteritis incidence",
+        ylab = "Number of People",
+        col = c("blue", "red", "orange"))
+
+par(xpd = TRUE)
+legend("topright", c("< 1 glass/day", ">4 glasses/day", "1 to 4 glasses/day"), bty = "n", fill = c("blue", "red", "orange"))
+
+# Statistics (Pearson's Chi-squared Test)
+ Chisquared <- chisq.test(gastroenteritisX, correct = FALSE)
+ Chisquared
+```
+##Statistical Test
+* Pearson's Chi-square test
+* X-squared = 74.925, degrees of freedom = 2, p value < 2.2e-16
+
+### Test Assumptions:
+* Assessing if there is  relationship between the two variables
+* Running an analysis on the variables
+* Data is unmatched
+* Variance is equal amongst groups
+
+##Outcome Analysis
+* A significant relationship (p< 0.05) between the amount of contaminated water consumed and whether an individual had gastroenteritis was evaluated.The amount of contaminated water consumed was directly proportional to gastroenteritis cases.
+* Therefore reject the null hypothesis and accept the alternative hypothesis.
+
+#Chunk 3
+#NAUSEA
+
+##Null Hypothesis
+* Administering 5HT3 receptor blocker does not relieve nausea intensity. 
+
+##Alternative Hypothesis
+* Administering 5HT3 receptor blocker decreases nausea intensity. 
+```{r Nausea, echo = TRUE}
+# import data set
+nauseacsv <- read.csv("nausea.csv")
+nausea <- tbl_df(nauseacsv)
+nausea
+
+# '40' in the data seems t be an error since te measure exceeds the pain scale.Therefore I have changed the value to be equal to '4' so that it falls within the region of the pain scale.
+
+nausea[8,3] = 4
+nausea
+
+# plot dataset
+plot(nausea$Nausea_before~nausea$Patient,
+     col = "green",
+     type = "o",
+     ylim = c(0,6),
+     ylab = "Nausea Rating",
+     xlab = "Patient",
+     main = "Intensity rating of nausea before and after administering 5HT receptor blocker")
+lines(nausea$Nausea_after~nausea$Patient)
+points(nausea$Nausea_after~nausea$Patient)
+legend(4,6, c("Nausea before", "Nausea after"), fill = c("green", "black"))
+
+# Statistical test (Wilcoxin Signed-rank test)
+wilcox.test(nausea$Nausea_before, nausea$Nausea_after, paired = FALSE ,exact = FALSE)
+```
+## Statistical Test
+* Wilcoxin signed-rank test
+
+###Test Assumptions:
+* The measurements were taken from the same sample group  
+* The errors are independent
+* Matchin is effective
+
+#Outcome Analysis
+* Administering 5HT3 receptor  blocker decreased the ratings of nausea intensity. Therefore, reject the null hypothesis.
+
+#Housing Prices
+##Null hypothesis 
+* There is no relationship between the interest rates and median house price USD housing prices.
+
+##Alternative hypothesis
+* Interest rate affects median house price USD housing prices. 
+
+```{r housing_prices, echo=TRUE}
+library(dplyr)
+library(knitr)
+library(tidyr)
+library(ggplot2)
+
+# Import and View dataset  
+housing_prices <- read.csv("housing-prices.csv")
+housing_prices
+
+interest = housing_prices$interest_rate
+house_price = housing_prices$median_house_price_USD
+head(cbind(interest,house_price))
+
+# Exploring data with a plot
+plot(interest,house_price,xlab = "interest_rate",ylab = "median_house_price_USD", pch= 23 ,col="blue",main = "Interest rate effect on housing prices")
+abline(lm(housing_prices$median_house_price_USD ~ housing_prices$interest_rate,data = housing_prices), col="red", lwd= 2 )
+
+
+##  Linear Regression 
+housing_prices.reg <- lm(median_house_price_USD~interest_rate, data=housing_prices)
+summary(housing_prices.reg)
+
+#Diagnostic plot 1
+plot(x = housing_prices.reg$fitted.values,
+     y = housing_prices.reg$residuals,
+     main = "Homoskedasticity", 
+     pch= 23 ,
+     col = "blue",
+     lwd= 2 )
+abline(h = 0)
+
+#Diagnostic plot 2 Gaussian residual distribution
+qqnorm(housing_prices.reg$residuals)
+qqline(housing_prices.reg$residuals)
+
+#Binary outcome 
+glm( housing_prices$median_house_price_USD ~ housing_prices$interest_rate,data = housing_prices)
+
+```
+## State p-value and degrees of freedom
+* p=0,0194
+* Df=14
+
+## Outcome analysis
+* Ran a linear regresion to check if there was a linear trend between x and y.
+* A qqplot to check if the residuals were normally distributed.
+* Homodeskedastic test to check if the resiuals had the same variance for all fitted values of x and y.
+
+##Test intepretation
+* The plot shows that an inverse linear reationship(p=0.02) exists between interest rate and housing prices.Therefore we can reject the null  hypothesis.
+* The data is not homodskedastic which is a requirement of a linear regression and it does not fit the requirements of a gaussian residual distribution.The data didn't have an apparent linear relationship upon plotting.Therefore the data doesn't meet some of the requirements of a linear regression.
+
+
+ 
